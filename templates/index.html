@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Resume Screening & Job Matching</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="hero">
+    <div class="eyebrow">AI • NLP • RECRUITMENT SUPPORT</div>
+    <h1>Resume Screening <span>&</span><br>Job Matching</h1>
+    <p>Upload resumes, compare them with a job description, and review transparent match results.</p>
+  </header>
+
+  <main class="container">
+    <section class="panel">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">STEP 01</p>
+          <h2>Enter job requirements</h2>
+        </div>
+        <span class="tag">PDF · DOCX · TXT</span>
+      </div>
+
+      {% if error %}<div class="alert">{{ error }}</div>{% endif %}
+
+      <form method="post" enctype="multipart/form-data">
+        <label for="job_description">Job description</label>
+        <textarea id="job_description" name="job_description" rows="7" placeholder="Example: We need a Python developer with Python, SQL, machine learning, data analysis and communication skills..." required>{{ job_description }}</textarea>
+
+        <label for="resumes">Upload one or more resumes</label>
+        <input id="resumes" name="resumes" type="file" accept=".pdf,.docx,.txt" multiple required>
+        <p class="hint">Maximum 10 MB per request. Scanned PDFs may need OCR before analysis.</p>
+
+        <button type="submit">Analyse resumes <span>→</span></button>
+      </form>
+    </section>
+
+    {% if results %}
+    <section class="results">
+      <div class="results-title">
+        <div>
+          <p class="eyebrow">STEP 02</p>
+          <h2>Candidate results</h2>
+        </div>
+        <span class="tag">{{ results|length }} file(s)</span>
+      </div>
+
+      {% for item in results %}
+        <article class="candidate">
+          <div class="candidate-top">
+            <div class="file-icon">CV</div>
+            <div class="candidate-name">
+              <h3>{{ item.filename }}</h3>
+              <p>{% if item.error %}Unable to analyse{% else %}Rank #{{ loop.index }} · Based on matching score{% endif %}</p>
+            </div>
+            {% if item.error %}
+              <span class="score-badge error-badge">Error</span>
+            {% else %}
+              <div class="score"><strong>{{ item.score }}%</strong><span>match</span></div>
+            {% endif %}
+          </div>
+
+          {% if item.error %}
+            <div class="alert">{{ item.error }}</div>
+          {% else %}
+            <div class="progress"><span style="width: {{ item.score }}%"></span></div>
+            <p class="explanation">{{ item.explanation }}</p>
+
+            <div class="skill-columns">
+              <div class="skill-box">
+                <h4>✓ Matched skills <span>{{ item.matched_skills|length }}</span></h4>
+                {% if item.matched_skills %}
+                  <div class="chips">{% for skill in item.matched_skills %}<span class="chip good">{{ skill }}</span>{% endfor %}</div>
+                {% else %}<p class="empty">No listed skills matched.</p>{% endif %}
+              </div>
+              <div class="skill-box">
+                <h4>＋ Missing job skills <span>{{ item.missing_skills|length }}</span></h4>
+                {% if item.missing_skills %}
+                  <div class="chips">{% for skill in item.missing_skills %}<span class="chip missing">{{ skill }}</span>{% endfor %}</div>
+                {% else %}<p class="empty">No missing skills detected from the listed skill set.</p>{% endif %}
+              </div>
+            </div>
+
+            <details>
+              <summary>View all detected resume skills</summary>
+              {% if item.resume_skills %}
+                <div class="chips all-skills">{% for skill in item.resume_skills %}<span class="chip">{{ skill }}</span>{% endfor %}</div>
+              {% else %}<p class="empty">No skills from the built-in list were detected.</p>{% endif %}
+              <p class="hint">Text similarity: {{ item.similarity }}% (TF-IDF baseline)</p>
+            </details>
+          {% endif %}
+        </article>
+      {% endfor %}
+      <p class="disclaimer">Important: Scores are prototype estimates, not probabilities of job success. Review resumes fairly and make all hiring decisions with a human reviewer.</p>
+    </section>
+    {% endif %}
+
+    <section class="how">
+      <p class="eyebrow">HOW IT WORKS</p>
+      <div class="steps">
+        <div><b>01</b><strong>Upload</strong><p>Resume files</p></div>
+        <div><b>02</b><strong>Extract</strong><p>Text and skills</p></div>
+        <div><b>03</b><strong>Compare</strong><p>Job requirements</p></div>
+        <div><b>04</b><strong>Explain</strong><p>Score and skill gaps</p></div>
+      </div>
+    </section>
+    <footer>Student mini-project prototype · AI-assisted, human-guided recruitment</footer>
+  </main>
+</body>
+</html>
